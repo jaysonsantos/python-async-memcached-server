@@ -26,8 +26,8 @@ class Memcached(protocol.Protocol):
 
     # All structures will be appended to HEADER_STRUCT
     COMMANDS = {
-        #'get': {'command': 0x00, 'struct': '%ds'},
-        #'set': {'command': 0x01, 'struct': 'LL%ds%ds'},
+        'get': {'command': 0x00, 'struct': '%ds'},
+        'set': {'command': 0x01, 'struct': '!LL%ds%ds'},
         #'add': {'command': 0x02, 'struct': 'LL%ds%ds'},
         #'replace': {'command': 0x03, 'struct': 'LL%ds%ds'},
         #'delete': {'command': 0x04, 'struct': '%ds'},
@@ -89,10 +89,32 @@ class Memcached(protocol.Protocol):
 
         log.debug('Handling %s' % commands[command])
 
-        commandName = 'handle%s' % commands[command].capitalize()
-        if getattr(self, commandName):
+        commandName = 'handle%sCommand' % commands[command].capitalize()
+        if hasattr(self, commandName):
             getattr(self, commandName)(magic, command, keyLength, extLength,
             dataType, status, bodyLength, opaque, cas, extra)
+            return
+
+        self.sendError(command, 0, 0, self.STATUSES['unknown_command'], 0, 0)
+        return False
+
+    def handleSetCommand(self, magic, command, keyLength, extLength, dataType,
+        status, bodyLength, opaque, cas, extra):
+        contentLength = bodyLength - keyLength - extLength
+        (flags, expiry, key, value) = struct.unpack(
+            self.COMMANDS['set']['struct'] %  (keyLength, contentLength),
+            extra)
+
+
+        self.factory.storage[key] = {'flags': flags, 'expiry': expiry,
+            'value': value}
+
+    def handleGetCommand(self, magic, command, keyLength, extLength, dataType,
+        status, bodyLength, opaque, cas, extra):
+        key = struct.unpack(self.COMMANDS['get']['struct'] % keyLength)
+
+        if key in self.factory.storage:
+            pass
 
     def handleHeader(self, header):
         if len(header) != self.HEADER_SIZE:
