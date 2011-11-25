@@ -89,6 +89,11 @@ class Memcached(protocol.Protocol):
 
         log.debug('Handling %s' % commands[command])
 
+        commandName = 'handle%s' % commands[command].capitalize()
+        if getattr(self, commandName):
+            getattr(self, commandName)(magic, command, keyLength, extLength,
+            dataType, status, bodyLength, opaque, cas, extra)
+
     def handleHeader(self, header):
         if len(header) != self.HEADER_SIZE:
             log.debug('Invalid header')
@@ -117,6 +122,10 @@ class Memcached(protocol.Protocol):
 
 class MemcachedFactory(protocol.Factory):
     protocol = Memcached
+
+    def __init__(self, storage):
+        self.storage = storage
+        super(MemcachedFactory).__init__(self)
 
     def buildProtocol(self, addr):
         return self.protocol()
