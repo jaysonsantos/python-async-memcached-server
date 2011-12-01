@@ -26,7 +26,9 @@ class Memcached(protocol.Protocol):
 
     # All structures will be appended to HEADER_STRUCT
     COMMANDS = {
+        # Struct key name
         'get': {'command': 0x00, 'struct': '%ds'},
+        # Struct flags|expiry time|key|value
         'set': {'command': 0x01, 'struct': '!LL%ds%ds'},
         #'add': {'command': 0x02, 'struct': 'LL%ds%ds'},
         #'replace': {'command': 0x03, 'struct': 'LL%ds%ds'},
@@ -49,6 +51,9 @@ class Memcached(protocol.Protocol):
         'unknown_command': {'code': 0x81, 'message': 'Unknown command'},
         'out_of_memory': {'code': 0x82, 'message': ''},
     }
+
+    def __init__(self, factory):
+        self.factory = factory
 
     def connectionMade(self):
         log.info('Yay one client!')
@@ -147,7 +152,6 @@ class MemcachedFactory(protocol.Factory):
 
     def __init__(self, storage):
         self.storage = storage
-        super(MemcachedFactory).__init__(self)
 
     def buildProtocol(self, addr):
-        return self.protocol()
+        return self.protocol(self)
