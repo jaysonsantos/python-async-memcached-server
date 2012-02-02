@@ -41,7 +41,7 @@ class Memcached(protocol.Protocol):
     }
 
     STATUSES = {
-        'success': {'code': 0x00},
+        'success': {'code': 0x00, 'message': ''},
         'key_not_found': {'code': 0x01, 'message': 'Not found'},
         'key_exists': {'code': 0x02, 'message': ''},
         'value_too_large': {'code': 0x03, 'message': ''},
@@ -61,23 +61,26 @@ class Memcached(protocol.Protocol):
     def connectionLost(self, reason):
         log.info('Client disconnected. %s' % reason)
 
-    def sendError(self, command, keyLength, extLength, status, opaque, cas):
+    def sendMessage(self, command, keyLength, extLength, status, opaque, cas,
+        extra=None, body=None):
         bodyLength = 0
         if status['message']:
             bodyLength = len(status['message'])
-        log.info('Sending error: %s' % status['message'])
+        log.info('Sending message: %s' % status['message'])
 
-        bin = struct.pack(self.HEADER_STRUCT + '%ds' % bodyLength,
-                self.MAGIC['response'],
-                command,
-                keyLength,
-                extLength,
-                0x00,
-                status['code'],
-                bodyLength,
-                opaque,
-                cas,
-                status['message'])
+        args = [self.HEADER_STRUCT + '%ds' % bodyLength,
+                    self.MAGIC['response'],
+                    command,
+                    keyLength,
+                    extLength,
+                    0x00,
+                    status['code'],
+                    bodyLength,
+                    opaque,
+                    cas,
+                    status['message']]
+
+        bin = struct.pack(*args)
 
         self.transport.write(bin)
 
@@ -88,8 +91,8 @@ class Memcached(protocol.Protocol):
             self.COMMANDS.items()])
 
         if command not in commands.keys():
-            self.sendError(command, 0, 0, self.STATUSES['unknown_command'],
-            0, 0, )
+            self.sendMessage(command, 0, 0, self.STATUSES['unknown_command'],
+            0, 0)
             return False
 
         log.debug('Handling %s' % commands[command])
@@ -100,7 +103,7 @@ class Memcached(protocol.Protocol):
             dataType, status, bodyLength, opaque, cas, extra)
             return
 
-        self.sendError(command, 0, 0, self.STATUSES['unknown_command'], 0, 0)
+        self.sendMessage(command, 0, 0, self.STATUSES['unknown_command'], 0, 0)
         return False
 
     def handleSetCommand(self, magic, command, keyLength, extLength, dataType,
@@ -110,16 +113,25 @@ class Memcached(protocol.Protocol):
             self.COMMANDS['set']['struct'] %  (keyLength, contentLength),
             extra)
 
-
         self.factory.storage[key] = {'flags': flags, 'expiry': expiry,
             'value': value}
 
+        self.sendMessage(command, 0, 0, self.STATUSES['success'], 0, 0)
+
     def handleGetCommand(self, magic, command, keyLength, extLength, dataType,
         status, bodyLength, opaque, cas, extra):
-        key = struct.unpack(self.COMMANDS['get']['struct'] % keyLength)
+        key = struct.unpack(self.COMMANDS['get']['struct'] % keyLength,
+            extra)
 
-        if key in self.factory.storage:
+        try:
+            value = self.factory.storage[key[0]]
+            success = dict(self.STATUSES['success'])
+            self.sendMessage(command, 0, 0, ,
+            0, 0)
+        except RuntimeError:
             pass
+
+        self.sendMessage(command, 0, 0, self.STATUSES['key_not_found'], 0, 0)
 
     def handleHeader(self, header):
         if len(header) != self.HEADER_SIZE:
