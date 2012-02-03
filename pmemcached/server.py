@@ -126,7 +126,7 @@ class Memcached(protocol.Protocol):
         try:
             value = self.factory.storage[key[0]]
             success = dict(self.STATUSES['success'])
-            self.sendMessage(command, 0, 0, ,
+            self.sendMessage(command, 0, 0, 0,
             0, 0)
         except RuntimeError:
             pass
@@ -156,6 +156,7 @@ class Memcached(protocol.Protocol):
             self.handleCommand(*header)
 
     def dataReceived(self, data):
+        print repr(data)
         self.transport.write(self.handleData(data))
 
 
