@@ -51,7 +51,19 @@ class ServerTests(unittest.TestCase):
         self.tr = proto_helpers.StringTransport()
         self.protocol.makeConnection(self.tr)
 
+    def testGetInvalidKey(self):
+        key = 'foobarbazdoesnotexist'
+        expected = '\x81\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\t\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Not found'
 
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['get']['struct'] % (len(key)),
+            self.MAGIC['request'],
+            self.COMMANDS['get']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+
+        self.assertEqual(self.tr.value(), expected)
+'''
     def testSet(self):
         key = 'foo'
         value = 'bar'
@@ -65,11 +77,11 @@ class ServerTests(unittest.TestCase):
             len(key),
             8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
 
-        ret = self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
             self.COMMANDS['get']['struct'] % (len(key)),
             self.MAGIC['request'],
             self.COMMANDS['get']['command'],
             len(key), 0, 0, 0, len(key), 0, 0, key))
 
         self.assertTrue(False)
-
+'''

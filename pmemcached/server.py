@@ -91,7 +91,7 @@ class Memcached(protocol.Protocol):
             self.COMMANDS.items()])
 
         if command not in commands.keys():
-            self.sendMessage(command, 0, 0, self.STATUSES['unknown_command'],
+            self.sendMessage(self.STATUSES['unknown_command'], 0, 0, self.STATUSES['unknown_command'],
             0, 0)
             return False
 
@@ -124,14 +124,11 @@ class Memcached(protocol.Protocol):
             extra)
 
         try:
-            value = self.factory.storage[key[0]]
             success = dict(self.STATUSES['success'])
-            self.sendMessage(command, 0, 0, 0,
+            self.sendMessage(command, 0, 0, success,
             0, 0)
-        except RuntimeError:
-            pass
-
-        self.sendMessage(command, 0, 0, self.STATUSES['key_not_found'], 0, 0)
+        except KeyError:
+            self.sendMessage(command, 0, 0, self.STATUSES['key_not_found'], 0, 0)
 
     def handleHeader(self, header):
         if len(header) != self.HEADER_SIZE:
@@ -156,7 +153,6 @@ class Memcached(protocol.Protocol):
             self.handleCommand(*header)
 
     def dataReceived(self, data):
-        print repr(data)
         self.transport.write(self.handleData(data))
 
 
