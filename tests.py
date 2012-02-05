@@ -64,6 +64,28 @@ class ServerTests(unittest.TestCase):
 
         self.assertEqual(self.tr.value(), expected)
 
+    def testGet(self):
+        key = 'foo'
+        value = 'bar'
+        expected = '\x81\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
+        flags = 0
+        time = 1000
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['set']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['set']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['get']['struct'] % (len(key)),
+            self.MAGIC['request'],
+            self.COMMANDS['get']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+
+        self.assertEqual(self.tr.value(), expected)
+
     def testSet(self):
         key = 'foo'
         value = 'bar'
