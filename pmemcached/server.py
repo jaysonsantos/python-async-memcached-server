@@ -78,7 +78,7 @@ class Memcached(protocol.Protocol):
                     bodyLength,
                     opaque,
                     cas,
-                    status['message']]
+                    status['message'] if not body else body]
 
         bin = struct.pack(*args)
 
