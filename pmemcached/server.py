@@ -124,9 +124,9 @@ class Memcached(protocol.Protocol):
             extra)
 
         try:
-            success = dict(self.STATUSES['success'])
-            self.sendMessage(command, 0, 0, success,
-            0, 0)
+            value = self.factory.storage[key[0]]
+            self.sendMessage(command, 0, 0, self.STATUSES['success'],
+            0, 0, value['flags'], value['value'])
         except KeyError:
             self.sendMessage(command, 0, 0, self.STATUSES['key_not_found'], 0, 0)
 

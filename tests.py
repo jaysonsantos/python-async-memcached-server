@@ -63,7 +63,7 @@ class ServerTests(unittest.TestCase):
             len(key), 0, 0, 0, len(key), 0, 0, key))
 
         self.assertEqual(self.tr.value(), expected)
-'''
+
     def testSet(self):
         key = 'foo'
         value = 'bar'
@@ -82,6 +82,5 @@ class ServerTests(unittest.TestCase):
             self.MAGIC['request'],
             self.COMMANDS['get']['command'],
             len(key), 0, 0, 0, len(key), 0, 0, key))
-
+        print repr(self.tr.value())
         self.assertTrue(False)
-'''
