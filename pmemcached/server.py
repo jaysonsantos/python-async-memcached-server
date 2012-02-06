@@ -64,10 +64,12 @@ class Memcached(protocol.Protocol):
     def sendMessage(self, command, keyLength, extLength, status, opaque, cas,
         extra=None, body=None):
         bodyLength = 0
-        if status['message']:
+        if body:
+            bodyLength = len(body)
+        else:
             bodyLength = len(status['message'])
         log.info('Sending message: %s' % status['message'])
-
+        print keyLength
         args = [self.HEADER_STRUCT + '%ds' % bodyLength,
                     self.MAGIC['response'],
                     command,
@@ -120,7 +122,7 @@ class Memcached(protocol.Protocol):
         self.factory.storage[key] = {'flags': flags, 'expiry': expiry,
             'value': value}
 
-        self.sendMessage(command, 0, 0, self.STATUSES['success'], 0, 0)
+        self.sendMessage(command, len(key), 0, self.STATUSES['success'], 0, 0)
 
     def handleGetCommand(self, magic, command, keyLength, extLength, dataType,
         status, bodyLength, opaque, cas, extra):
@@ -130,9 +132,9 @@ class Memcached(protocol.Protocol):
         try:
             value = self.factory.storage[key[0]]
             self.sendMessage(command, 0, 0, self.STATUSES['success'],
-            0, 0, value['flags'], value['value'])
+            len(key[0]), 0, value['flags'], value['value'])
         except KeyError:
-            self.sendMessage(command, 0, 0, self.STATUSES['key_not_found'], 0, 0)
+            self.sendMessage(command, len(key[0]), 0, self.STATUSES['key_not_found'], 0, 0)
 
     def handleHeader(self, header):
         if len(header) != self.HEADER_SIZE:
