@@ -87,7 +87,6 @@ class Memcached(protocol.Protocol):
             args += ['%s%s' % (struct.pack('!L', extra), body)]
 
         bin = struct.pack(*args)
-        print repr(bin), command, args
 
         self.transport.write(bin)
 
