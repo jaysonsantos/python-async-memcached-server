@@ -65,11 +65,11 @@ class Memcached(protocol.Protocol):
         extra=None, body=None):
         bodyLength = 0
         if body:
-            bodyLength = len(body)
+            bodyLength = len(body) + 4 # flags
         else:
             bodyLength = len(status['message'])
-        log.info('Sending message: %s' % status['message'])
-        print keyLength
+        log.info('Sending message: %s' % status['message'] if not body else body)
+
         args = [self.HEADER_STRUCT + '%ds' % bodyLength,
                     self.MAGIC['response'],
                     command,
@@ -84,9 +84,10 @@ class Memcached(protocol.Protocol):
         if not body:
             args.append(status['message'])
         else:
-            args += [body]
+            args += ['%s%s' % (struct.pack('!L', extra), body)]
 
         bin = struct.pack(*args)
+        print repr(bin), command, args
 
         self.transport.write(bin)
 
@@ -97,8 +98,8 @@ class Memcached(protocol.Protocol):
             self.COMMANDS.items()])
 
         if command not in commands.keys():
-            self.sendMessage(self.STATUSES['unknown_command'], 0, 0, self.STATUSES['unknown_command'],
-            0, 0)
+            self.sendMessage(self.STATUSES['unknown_command'], 0, 0,
+                self.STATUSES['unknown_command'], 0, 0)
             return False
 
         log.debug('Handling %s' % commands[command])
@@ -131,8 +132,9 @@ class Memcached(protocol.Protocol):
 
         try:
             value = self.factory.storage[key[0]]
-            self.sendMessage(command, 0, 0, self.STATUSES['success'],
-            len(key[0]), 0, value['flags'], value['value'])
+
+            self.sendMessage(command, 0, 4, self.STATUSES['success'],
+            0, 1, value['flags'], value['value'])
         except KeyError:
             self.sendMessage(command, len(key[0]), 0, self.STATUSES['key_not_found'], 0, 0)
 
