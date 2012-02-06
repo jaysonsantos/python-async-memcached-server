@@ -65,10 +65,11 @@ class Memcached(protocol.Protocol):
         extra=None, body=None):
         bodyLength = 0
         if body:
-            bodyLength = len(body) + 4 # flags
+            bodyLength = len(body) + 4  # flags
         else:
             bodyLength = len(status['message'])
-        log.info('Sending message: %s' % status['message'] if not body else body)
+        log.info('Sending message: %s' % \
+            status['message'] if not body else body)
 
         args = [self.HEADER_STRUCT + '%ds' % bodyLength,
                     self.MAGIC['response'],
@@ -116,7 +117,7 @@ class Memcached(protocol.Protocol):
         status, bodyLength, opaque, cas, extra):
         contentLength = bodyLength - keyLength - extLength
         (flags, expiry, key, value) = struct.unpack(
-            self.COMMANDS['set']['struct'] %  (keyLength, contentLength),
+            self.COMMANDS['set']['struct']  % (keyLength, contentLength),
             extra)
 
         self.factory.storage[key] = {'flags': flags, 'expiry': expiry,
@@ -135,7 +136,8 @@ class Memcached(protocol.Protocol):
             self.sendMessage(command, 0, 4, self.STATUSES['success'],
             0, 1, value['flags'], value['value'])
         except KeyError:
-            self.sendMessage(command, len(key[0]), 0, self.STATUSES['key_not_found'], 0, 0)
+            self.sendMessage(command, len(key[0]), 0,
+                self.STATUSES['key_not_found'], 0, 0)
 
     def handleHeader(self, header):
         if len(header) != self.HEADER_SIZE:
