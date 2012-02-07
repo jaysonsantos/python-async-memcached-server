@@ -98,7 +98,7 @@ class Memcached(protocol.Protocol):
             self.COMMANDS.items()])
 
         if command not in commands.keys():
-            self.sendMessage(self.STATUSES['unknown_command'], 0, 0,
+            self.sendMessage(command, 0, 0,
                 self.STATUSES['unknown_command'], 0, 0)
             return False
 

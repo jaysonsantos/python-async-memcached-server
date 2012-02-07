@@ -105,3 +105,16 @@ class ServerTests(unittest.TestCase):
             8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
 
         self.assertEqual(self.tr.value(), expected)
+
+    def testUnknownCommand(self):
+        key = 'foo'
+        expected = '\x81\x91\x00\x00\x00\x00\x00\x81\x00\x00\x00\x0F\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Unknown command'
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['get']['struct'] % (len(key)),
+            self.MAGIC['request'],
+            0x91,
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+
+        self.assertEqual(self.tr.value(), expected)
