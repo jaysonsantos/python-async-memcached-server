@@ -8,5 +8,5 @@ Get and set functions.
 
 ## Testing
 ```bash
-trial test.py
+trial tests.py
 ```
