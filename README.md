@@ -12,6 +12,10 @@ trial tests.py
 ```
 
 ## Benchmarks
+To execute benchmarks, you need to run the server with:
+```
+python -mpmemached
+```
 
 ### PyPy 1.8
 ```
