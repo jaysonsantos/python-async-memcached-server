@@ -24,7 +24,7 @@ $ python benchmark.py
 Finished in 23.00 seconds, total 4999950000
 ```
 
-### Python 2.7.1
+### CPython 2.7.1
 ```
 (dev)jayson@jayson-ThinkPad-Edge:~/github/python-async-memcached-server (master) Python 2.7.1+
 $ python benchmark.py 
