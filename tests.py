@@ -2,6 +2,8 @@ import struct
 from twisted.trial import unittest
 from twisted.test import proto_helpers
 from pmemcached.storages.memory import Storage
+from pmemcached.storages import getStorage
+from pmemcached.storages.memory import Storage as MemoryStorage
 from pmemcached.server import MemcachedFactory
 
 
@@ -118,3 +120,11 @@ class ServerTests(unittest.TestCase):
             len(key), 0, 0, 0, len(key), 0, 0, key))
 
         self.assertEqual(self.tr.value(), expected)
+
+
+class BaseTests(unittest.TestCase):
+    def testGetValidStorage(self):
+        self.assertTrue(isinstance(getStorage('memcached'), MemoryStorage))
+
+    def testGetInvalidValidStorage(self):
+        self.assertTrue(isinstance(getStorage('foo'), MemoryStorage))
