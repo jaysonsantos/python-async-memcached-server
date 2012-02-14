@@ -107,9 +107,6 @@ class Memcached(protocol.Protocol):
             dataType, status, bodyLength, opaque, cas, extra)
             return
 
-        self.sendMessage(command, 0, 0, self.STATUSES['unknown_command'], 0, 0)
-        return False
-
     def handleSetCommand(self, magic, command, keyLength, extLength, dataType,
         status, bodyLength, opaque, cas, extra):
         contentLength = bodyLength - keyLength - extLength

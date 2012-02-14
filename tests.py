@@ -121,6 +121,18 @@ class ServerTests(unittest.TestCase):
 
         self.assertEqual(self.tr.value(), expected)
 
+    def testInvalidHeader(self):
+        self.protocol.dataReceived('foobar')
+
+        self.assertEqual(self.tr.value(), '')
+
+
+    def testInvalidMagicCode(self):
+        self.protocol.dataReceived(
+            '\x82\x91\x00\x00\x00\x00\x00\x81\x00\x00\x00\x0F\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+        self.assertEqual(self.tr.value(), '')
+
 
 class BaseTests(unittest.TestCase):
     def testGetValidStorage(self):
