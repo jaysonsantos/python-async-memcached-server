@@ -58,9 +58,6 @@ class Memcached(protocol.Protocol):
     def connectionMade(self):
         log.info('Yay one client!')
 
-    def connectionLost(self, reason):
-        log.info('Client disconnected. %s' % reason)
-
     def sendMessage(self, command, keyLength, extLength, status, opaque, cas,
         extra=None, body=None):
         bodyLength = 0
