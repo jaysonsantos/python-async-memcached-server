@@ -58,6 +58,9 @@ class ServerTests(unittest.TestCase):
 
         self.protocol.makeConnection(self.tr)
 
+    def tearDown(self):
+        self.protocol.transport.loseConnection()
+
     def testGetInvalidKey(self):
         key = 'foobarbazdoesnotexist'
         expected = '\x81\x00\x00\x15\x00\x00\x00\x01\x00\x00\x00\t\x00\x00' + \
@@ -108,6 +111,7 @@ class ServerTests(unittest.TestCase):
 
         flags = 0
         time = 1000
+
         self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
             self.COMMANDS['set']['struct'] % (len(key), len(value)),
             self.MAGIC['request'],
