@@ -90,7 +90,7 @@ class Memcached(protocol.Protocol):
 
     def handleCommand(self, magic, command, keyLength, extLength, dataType,
         status, bodyLength, opaque, cas, extra):
-        log.msg('Trying to handle command %d' % command)
+        log.msg('Trying to handle command 0x%0.2x' % command)
         commands = dict([(c[1]['command'], c[0]) for c in \
             self.COMMANDS.items()])
 
@@ -142,7 +142,7 @@ class Memcached(protocol.Protocol):
             opaque, cas) = struct.unpack(self.HEADER_STRUCT, header)
 
         if magic != self.MAGIC['request']:
-            log.msg('Invalid magic code %d' % magic)
+            log.msg('Invalid magic code 0x%0.2x' % magic)
             return False
 
         return (magic, command, keyLength, extLength, dataType, status,
