@@ -136,6 +136,59 @@ class ServerTests(unittest.TestCase):
             len(key), 0, 0, 0, len(key), 0, 0, key))
         self.assertEqual(self.tr.value(), expected_not_found)
 
+    def testOverwritedExpireTime(self):
+        key = 'foo'
+        value = 'bar'
+        expected = '\x81\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'+ \
+            '\x81\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00bar'
+        expected_not_found = '\x81\x00\x00\x03\x00\x00\x00\x01\x00\x00\x00\t' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Not found'
+
+        flags = 0
+        time = 1000
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['set']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['set']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['get']['struct'] % (len(key)),
+            self.MAGIC['request'],
+            self.COMMANDS['get']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+
+        self.assertEqual(self.tr.value(), expected)
+
+        time = 1500
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['set']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['set']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+
+        self.clock.advance(1)
+        self.tr.clear()
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['get']['struct'] % (len(key)),
+            self.MAGIC['request'],
+            self.COMMANDS['get']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+        self.assertEqual(self.tr.value(), '\x81\x00\x00\x00\x04\x00\x00\x00\x00' + \
+            '\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00' + \
+            '\x00\x00\x00bar')
+
+        # Can't have more than one because the backend should overwrite the first
+        # one
+        self.assertEqual(len(self.clock.calls), 1)
+        self.assertEqual(self.clock.calls[0].getTime(), 1.5)
 
     def testSet(self):
         key = 'foo'
