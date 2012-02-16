@@ -1,6 +1,7 @@
 import struct
 from twisted.trial import unittest
 from twisted.test import proto_helpers
+from twisted.internet import task
 from pmemcached.storages.memory import Storage
 from pmemcached.storages import getStorage
 from pmemcached.storages.memory import Storage as MemoryStorage
@@ -51,6 +52,10 @@ class ServerTests(unittest.TestCase):
         factory = MemcachedFactory(storage)
         self.protocol = factory.buildProtocol(('127.0.0.1', 0))
         self.tr = proto_helpers.StringTransport()
+
+        self.clock = task.Clock()
+        storage.callLater = self.clock.callLater
+
         self.protocol.makeConnection(self.tr)
 
     def testGetInvalidKey(self):
@@ -90,6 +95,43 @@ class ServerTests(unittest.TestCase):
             len(key), 0, 0, 0, len(key), 0, 0, key))
 
         self.assertEqual(self.tr.value(), expected)
+
+    def testGetExpiredKey(self):
+        key = 'foo'
+        value = 'bar'
+        expected = '\x81\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'+ \
+            '\x81\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00bar'
+        expected_not_found = '\x81\x00\x00\x03\x00\x00\x00\x01\x00\x00\x00\t' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Not found'
+
+        flags = 0
+        time = 1000
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['set']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['set']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['get']['struct'] % (len(key)),
+            self.MAGIC['request'],
+            self.COMMANDS['get']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+
+        self.assertEqual(self.tr.value(), expected)
+        self.clock.advance(1)
+        self.tr.clear()
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['get']['struct'] % (len(key)),
+            self.MAGIC['request'],
+            self.COMMANDS['get']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+        self.assertEqual(self.tr.value(), expected_not_found)
+
 
     def testSet(self):
         key = 'foo'
