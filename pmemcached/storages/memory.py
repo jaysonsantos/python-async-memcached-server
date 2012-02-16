@@ -5,7 +5,8 @@ class Storage(BaseStorage):
     data = {}
 
     def expire_key(self, key):
-        del self.data[key]
+        if key in self.data:
+            del self.data[key]
 
     def __setitem__(self, key, value):
         self.data[key] = value

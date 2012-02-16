@@ -12,15 +12,18 @@ class BaseStorage(object):
         pass
 
     def _expire_key(self, key):
-        if datetime.datetime.now() < self.expires[key]:
-            log.debug('Expiring key %s' % key)
-            self.expire_key(key)
+        log.debug('Expiring key %s' % key)
+        self.expire_key(key)
+        del self.expires[key]
+
+    def _add_expiry_time(self, key, expiry):
+        log.debug('Key %s will expire in %d microseconds' % (key, expiry))
+
+        if key in self.expires:
+            self.expires[key].cancel()
+            del self.expires[key]
+
+        self.expires[key] = self.callLater(expiry/ 1000.0, self._expire_key, key)
 
     def __setitem__(self, key, value):
-        expire_time = datetime.datetime.now() + \
-            datetime.timedelta(microseconds=value['expiry'] * 1000)
-        log.debug('Key %s will expire in %s. Microseconds %d' % (key, expire_time,
-            value['expiry']))
-        self.expires[key] = expire_time
-        self.callLater(value['expiry'] / 1000.0, self._expire_key, key)
-
+        self._add_expiry_time(key, value['expiry'])

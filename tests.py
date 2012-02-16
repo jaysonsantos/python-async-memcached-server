@@ -48,13 +48,13 @@ class ServerTests(unittest.TestCase):
     }
 
     def setUp(self):
-        storage = Storage()
-        factory = MemcachedFactory(storage)
+        self.storage = Storage()
+        factory = MemcachedFactory(self.storage)
         self.protocol = factory.buildProtocol(('127.0.0.1', 0))
         self.tr = proto_helpers.StringTransport()
 
         self.clock = task.Clock()
-        storage.callLater = self.clock.callLater
+        self.storage.callLater = self.clock.callLater
 
         self.protocol.makeConnection(self.tr)
 
