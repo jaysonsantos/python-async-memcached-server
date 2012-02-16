@@ -12,14 +12,15 @@ class BaseStorage(object):
         pass
 
     def _expire_key(self, key):
-        log.debug('Expiring key %s' % key)
+        log.msg('Expiring key %s' % key)
         self.expire_key(key)
         del self.expires[key]
 
     def _add_expiry_time(self, key, expiry):
-        log.debug('Key %s will expire in %d microseconds' % (key, expiry))
+        log.msg('Key %s will expire in %d microseconds' % (key, expiry))
 
         if key in self.expires:
+            log.msg('Key %s already exists, cancelling its expiral' % key)
             self.expires[key].cancel()
             del self.expires[key]
 

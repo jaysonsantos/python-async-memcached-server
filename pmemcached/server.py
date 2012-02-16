@@ -56,7 +56,7 @@ class Memcached(protocol.Protocol):
         self.factory = factory
 
     def connectionMade(self):
-        log.info('Yay one client!')
+        log.msg('Yay one client!')
 
     def sendMessage(self, command, keyLength, extLength, status, opaque, cas,
         extra=None, body=None):
@@ -65,7 +65,7 @@ class Memcached(protocol.Protocol):
             bodyLength = len(body) + 4  # flags
         else:
             bodyLength = len(status['message'])
-        log.info('Sending message: %s' % \
+        log.msg('Sending message: %s' % \
             status['message'] if not body else body)
 
         args = [self.HEADER_STRUCT + '%ds' % bodyLength,
@@ -90,7 +90,7 @@ class Memcached(protocol.Protocol):
 
     def handleCommand(self, magic, command, keyLength, extLength, dataType,
         status, bodyLength, opaque, cas, extra):
-        log.debug('Trying to handle command %d' % command)
+        log.msg('Trying to handle command %d' % command)
         commands = dict([(c[1]['command'], c[0]) for c in \
             self.COMMANDS.items()])
 
@@ -99,7 +99,7 @@ class Memcached(protocol.Protocol):
                 self.STATUSES['unknown_command'], 0, 0)
             return False
 
-        log.debug('Handling %s' % commands[command])
+        log.msg('Handling %s' % commands[command])
 
         commandName = 'handle%sCommand' % commands[command].capitalize()
         if hasattr(self, commandName):
@@ -135,14 +135,14 @@ class Memcached(protocol.Protocol):
 
     def handleHeader(self, header):
         if len(header) != self.HEADER_SIZE:
-            log.debug('Invalid header')
+            log.msg('Invalid header')
             return False
 
         (magic, command, keyLength, extLength, dataType, status, bodyLength,
             opaque, cas) = struct.unpack(self.HEADER_STRUCT, header)
 
         if magic != self.MAGIC['request']:
-            log.debug('Invalid magic code %d' % magic)
+            log.msg('Invalid magic code %d' % magic)
             return False
 
         return (magic, command, keyLength, extLength, dataType, status,
