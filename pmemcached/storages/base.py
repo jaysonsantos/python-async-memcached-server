@@ -4,8 +4,9 @@ from ..logger import log
 
 
 class BaseStorage(object):
-    callLater = reactor.callLater
-    expires = {}
+    def __init__(self):
+        self.expires = {}
+        self.callLater = reactor.callLater
 
     # Implemented in backend
     def expire_key(self, key):
