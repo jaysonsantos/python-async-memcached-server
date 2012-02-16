@@ -137,6 +137,10 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), expected_not_found)
 
     def testOverwritedExpireTime(self):
+        """
+        This will test if storage wont create 2 callLaters for the same key. It have to
+        aways delete old one if it is not expired and create a new one.
+        """
         key = 'foo'
         value = 'bar'
         expected = '\x81\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
