@@ -10,7 +10,7 @@ class BaseStorage(object):
 
     # Implemented in backend
     def expire_key(self, key):
-        pass
+        pass  # pragma: no cover
 
     def _expire_key(self, key):
         log.msg('Expiring key %s' % key)
