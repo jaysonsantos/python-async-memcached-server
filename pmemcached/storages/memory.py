@@ -2,7 +2,9 @@ from .base import BaseStorage
 
 
 class Storage(BaseStorage):
-    data = {}
+    def __init__(self):
+        super(Storage, self).__init__()
+        self.data = {}
 
     def expire_key(self, key):
         if key in self.data:

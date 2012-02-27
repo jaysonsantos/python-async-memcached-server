@@ -121,13 +121,13 @@ class Memcached(protocol.Protocol):
 
         if command == self.COMMANDS['replace']['command'] and \
             key not in self.factory.storage:
-            self.sendMessage(command, 0, 0, self.STATUSES['key_exists'], 0, 0)
+            self.sendMessage(command, 0, 0, self.STATUSES['key_not_found'], 0, 0)
             return
 
         self.factory.storage[key] = {'flags': flags, 'expiry': expiry,
             'value': value}
 
-        self.sendMessage(command, len(key), 0, self.STATUSES['success'], 0, 0)
+        self.sendMessage(command, 0, 0, self.STATUSES['success'], 0, 0)
 
     def handleSetCommand(self, magic, command, keyLength, extLength, dataType,
         status, bodyLength, opaque, cas, extra):

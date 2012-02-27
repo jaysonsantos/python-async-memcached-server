@@ -77,7 +77,7 @@ class ServerTests(unittest.TestCase):
     def testGet(self):
         key = 'foo'
         value = 'bar'
-        expected = '\x81\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+        expected = '\x81\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'+ \
             '\x81\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00bar'
@@ -102,7 +102,7 @@ class ServerTests(unittest.TestCase):
     def testGetExpiredKey(self):
         key = 'foo'
         value = 'bar'
-        expected = '\x81\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+        expected = '\x81\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'+ \
             '\x81\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00bar'
@@ -143,7 +143,7 @@ class ServerTests(unittest.TestCase):
         """
         key = 'foo'
         value = 'bar'
-        expected = '\x81\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+        expected = '\x81\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'+ \
             '\x81\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00bar'
@@ -197,7 +197,7 @@ class ServerTests(unittest.TestCase):
     def testSet(self):
         key = 'foo'
         value = 'bar'
-        expected = '\x81\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+        expected = '\x81\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 
         flags = 0
@@ -214,7 +214,7 @@ class ServerTests(unittest.TestCase):
     def testAdd(self):
         key = 'foo'
         value = 'bar'
-        expected_add_success = '\x81\x02\x00\x03\x00\x00\x00\x00\x00\x00' + \
+        expected_add_success = '\x81\x02\x00\x00\x00\x00\x00\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         expected_add_fail ='\x81\x02\x00\x00\x00\x00\x00\x02\x00\x00\x00\x14' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Data exists for key.'
@@ -242,12 +242,52 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), expected_add_fail)
 
     def testReplace(self):
-        self.assertTrue(False) # implement this
+        key = 'foo'
+        value = 'bar'
+        expected_replace = '\x81\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
+        flags = 0
+        time = 1000
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['set']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['set']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+        self.tr.clear()
+
+        value = 'baz'
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['replace']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['replace']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+        self.assertEqual(self.tr.value(), expected_replace)
+
+    def testReplaceInvalidKey(self):
+        key = 'foo'
+        value = 'bar'
+        expected = '\x81\x03\x00\x00\x00\x00\x00\x01\x00\x00\x00\t\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Not found'
+
+        flags = 0
+        time = 1000
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['replace']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['replace']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+
+        self.assertEqual(self.tr.value(), expected)
 
     def testDelete(self):
         key = 'foo'
         value = 'bar'
-        expected_set = '\x81\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+        expected_set = '\x81\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         expected_delete = '\x81\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
