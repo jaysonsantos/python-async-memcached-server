@@ -241,6 +241,12 @@ class ServerTests(unittest.TestCase):
 
         self.assertEqual(self.tr.value(), expected_add_fail)
 
+    def testReplace(self):
+        self.assertTrue(False) # implement this
+
+    def testDelete(self):
+        self.assertTrue(False) # implement this
+
     def testUnknownCommand(self):
         key = 'foo'
         expected = '\x81\x91\x00\x00\x00\x00\x00\x81\x00\x00\x00\x0F\x00' + \

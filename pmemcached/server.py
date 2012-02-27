@@ -31,7 +31,7 @@ class Memcached(protocol.Protocol):
         # Struct flags|expiry time|key|value
         'set': {'command': 0x01, 'struct': '!LL%ds%ds'},
         'add': {'command': 0x02, 'struct': 'LL%ds%ds'},
-        #'replace': {'command': 0x03, 'struct': 'LL%ds%ds'},
+        'replace': {'command': 0x03, 'struct': 'LL%ds%ds'},
         #'delete': {'command': 0x04, 'struct': '%ds'},
         #'incr': {'command': 0x05, 'struct': 'QQL%ds'},
         #'decr': {'command': 0x06, 'struct': 'QQL%ds'},
@@ -107,8 +107,8 @@ class Memcached(protocol.Protocol):
             dataType, status, bodyLength, opaque, cas, extra)
             return
 
-    def handleSetCommand(self, magic, command, keyLength, extLength, dataType,
-        status, bodyLength, opaque, cas, extra):
+    def _handleSetAddReplaceCommand(self, magic, command, keyLength,
+        extLength, dataType, status, bodyLength, opaque, cas, extra):
         contentLength = bodyLength - keyLength - extLength
         (flags, expiry, key, value) = struct.unpack(
             self.COMMANDS['set']['struct']  % (keyLength, contentLength),
@@ -119,15 +119,30 @@ class Memcached(protocol.Protocol):
             self.sendMessage(command, 0, 0, self.STATUSES['key_exists'], 0, 0)
             return
 
+        if command == self.COMMANDS['replace']['command'] and \
+            key not in self.factory.storage:
+            self.sendMessage(command, 0, 0, self.STATUSES['key_exists'], 0, 0)
+            return
+
         self.factory.storage[key] = {'flags': flags, 'expiry': expiry,
             'value': value}
 
         self.sendMessage(command, len(key), 0, self.STATUSES['success'], 0, 0)
 
+    def handleSetCommand(self, magic, command, keyLength, extLength, dataType,
+        status, bodyLength, opaque, cas, extra):
+        return self._handleSetAddReplaceCommand(magic, command, keyLength,
+            extLength, dataType, status, bodyLength, opaque, cas, extra)
+
     def handleAddCommand(self, magic, command, keyLength, extLength, dataType,
         status, bodyLength, opaque, cas, extra):
-        return self.handleSetCommand(magic, command, keyLength, extLength,
-        dataType, status, bodyLength, opaque, cas, extra)
+        return self._handleSetAddReplaceCommand(magic, command, keyLength,
+            extLength, dataType, status, bodyLength, opaque, cas, extra)
+
+    def handleReplaceCommand(self, magic, command, keyLength, extLength,
+        dataType, status, bodyLength, opaque, cas, extra):
+        return self._handleSetAddReplaceCommand(magic, command, keyLength,
+            extLength, dataType, status, bodyLength, opaque, cas, extra)
 
 
     def handleGetCommand(self, magic, command, keyLength, extLength, dataType,
