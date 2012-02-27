@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/jaysonsantos/python-async-memcached-server.png?branch=master)](http://travis-ci.org/jaysonsantos/python-async-memcached-server)
+
 # WHY?
 For fun.
 This is not intended to be used in production, however I'm focusing in using pypy to boost performance.
