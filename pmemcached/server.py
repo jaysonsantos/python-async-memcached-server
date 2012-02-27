@@ -32,7 +32,7 @@ class Memcached(protocol.Protocol):
         'set': {'command': 0x01, 'struct': '!LL%ds%ds'},
         'add': {'command': 0x02, 'struct': 'LL%ds%ds'},
         'replace': {'command': 0x03, 'struct': 'LL%ds%ds'},
-        #'delete': {'command': 0x04, 'struct': '%ds'},
+        'delete': {'command': 0x04, 'struct': '%ds'},
         #'incr': {'command': 0x05, 'struct': 'QQL%ds'},
         #'decr': {'command': 0x06, 'struct': 'QQL%ds'},
         #'flush': {'command': 0x08, 'struct': 'I'},
@@ -144,7 +144,6 @@ class Memcached(protocol.Protocol):
         return self._handleSetAddReplaceCommand(magic, command, keyLength,
             extLength, dataType, status, bodyLength, opaque, cas, extra)
 
-
     def handleGetCommand(self, magic, command, keyLength, extLength, dataType,
         status, bodyLength, opaque, cas, extra):
         key = struct.unpack(self.COMMANDS['get']['struct'] % keyLength,
@@ -158,6 +157,16 @@ class Memcached(protocol.Protocol):
         except KeyError:
             self.sendMessage(command, len(key[0]), 0,
                 self.STATUSES['key_not_found'], 0, 0)
+
+    def handleDeleteCommand(self, magic, command, keyLength, extLength, dataType,
+        status, bodyLength, opaque, cas, extra):
+        key = struct.unpack(self.COMMANDS['delete']['struct'] % keyLength,
+            extra)[0]
+        try:
+            del self.factory.storage[key]
+            self.sendMessage(command, 0, 0, self.STATUSES['success'], 0, 0)
+        except KeyError:
+             self.sendMessage(command, 0, 0, self.STATUSES['key_not_found'], 0, 0)
 
     def handleHeader(self, header):
         if len(header) != self.HEADER_SIZE:

@@ -245,7 +245,43 @@ class ServerTests(unittest.TestCase):
         self.assertTrue(False) # implement this
 
     def testDelete(self):
-        self.assertTrue(False) # implement this
+        key = 'foo'
+        value = 'bar'
+        expected_set = '\x81\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        expected_delete = '\x81\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        expected_delete_fail = '\x81\x04\x00\x00\x00\x00\x00\x01\x00\x00\x00\t' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Not found'
+
+        flags = 0
+        time = 1000
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['set']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['set']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+
+        self.assertEqual(self.tr.value(), expected_set)
+        self.tr.clear()
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['delete']['struct'] % len(key),
+            self.MAGIC['request'],
+            self.COMMANDS['delete']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+
+        self.assertEqual(self.tr.value(), expected_delete)
+        self.tr.clear()
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['delete']['struct'] % len(key),
+            self.MAGIC['request'],
+            self.COMMANDS['delete']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+
+        self.assertEqual(self.tr.value(), expected_delete_fail)
 
     def testUnknownCommand(self):
         key = 'foo'
