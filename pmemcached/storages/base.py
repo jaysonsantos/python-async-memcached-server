@@ -29,3 +29,10 @@ class BaseStorage(object):
 
     def __setitem__(self, key, value):
         self._add_expiry_time(key, value['expiry'])
+
+    def __contains__(self, key):
+        try:
+            self[key]
+            return True
+        except KeyError:
+            return False

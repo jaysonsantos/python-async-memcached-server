@@ -30,7 +30,7 @@ class Memcached(protocol.Protocol):
         'get': {'command': 0x00, 'struct': '%ds'},
         # Struct flags|expiry time|key|value
         'set': {'command': 0x01, 'struct': '!LL%ds%ds'},
-        #'add': {'command': 0x02, 'struct': 'LL%ds%ds'},
+        'add': {'command': 0x02, 'struct': 'LL%ds%ds'},
         #'replace': {'command': 0x03, 'struct': 'LL%ds%ds'},
         #'delete': {'command': 0x04, 'struct': '%ds'},
         #'incr': {'command': 0x05, 'struct': 'QQL%ds'},
@@ -43,7 +43,7 @@ class Memcached(protocol.Protocol):
     STATUSES = {
         'success': {'code': 0x00, 'message': ''},
         'key_not_found': {'code': 0x01, 'message': 'Not found'},
-        'key_exists': {'code': 0x02, 'message': ''},
+        'key_exists': {'code': 0x02, 'message': 'Data exists for key.'},
         'value_too_large': {'code': 0x03, 'message': ''},
         'invalid_arguments': {'code': 0x04, 'message': 'Invalid arguments'},
         'item_not_stored': {'code': 0x05, 'message': ''},
@@ -114,10 +114,21 @@ class Memcached(protocol.Protocol):
             self.COMMANDS['set']['struct']  % (keyLength, contentLength),
             extra)
 
+        if command == self.COMMANDS['add']['command'] and \
+            key in self.factory.storage:
+            self.sendMessage(command, len(key), 0, self.STATUSES['key_exists'], 0, 0)
+            return
+
         self.factory.storage[key] = {'flags': flags, 'expiry': expiry,
             'value': value}
 
         self.sendMessage(command, len(key), 0, self.STATUSES['success'], 0, 0)
+
+    def handleAddCommand(self, magic, command, keyLength, extLength, dataType,
+        status, bodyLength, opaque, cas, extra):
+        return self.handleSetCommand(magic, command, keyLength, extLength,
+        dataType, status, bodyLength, opaque, cas, extra)
+
 
     def handleGetCommand(self, magic, command, keyLength, extLength, dataType,
         status, bodyLength, opaque, cas, extra):
