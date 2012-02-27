@@ -116,7 +116,7 @@ class Memcached(protocol.Protocol):
 
         if command == self.COMMANDS['add']['command'] and \
             key in self.factory.storage:
-            self.sendMessage(command, len(key), 0, self.STATUSES['key_exists'], 0, 0)
+            self.sendMessage(command, 0, 0, self.STATUSES['key_exists'], 0, 0)
             return
 
         self.factory.storage[key] = {'flags': flags, 'expiry': expiry,
