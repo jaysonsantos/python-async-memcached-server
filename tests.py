@@ -211,6 +211,37 @@ class ServerTests(unittest.TestCase):
 
         self.assertEqual(self.tr.value(), expected)
 
+    def testAdd(self):
+        key = 'foo'
+        value = 'bar'
+        expected_add_success = '\x81\x02\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        expected_add_fail ='\x81\x02\x00\x00\x00\x02\x14\x00\x00' + \
+            'Data exists for key.'
+
+        flags = 0
+        time = 1000
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['add']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['add']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+
+        self.assertEqual(self.tr.value(), expected_add_success)
+
+        self.tr.clear()
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['add']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['add']['command'],
+            len(key),
+            8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
+
+        self.assertEqual(self.tr.value(), expected_add_fail)
+
+
+
     def testUnknownCommand(self):
         key = 'foo'
         expected = '\x81\x91\x00\x00\x00\x00\x00\x81\x00\x00\x00\x0F\x00' + \
