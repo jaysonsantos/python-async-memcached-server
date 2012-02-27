@@ -253,6 +253,9 @@ class ServerTests(unittest.TestCase):
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         expected_delete_fail = '\x81\x04\x00\x00\x00\x00\x00\x01\x00\x00\x00\t' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Not found'
+        expected_get_should_not_exists = '\x81\x00\x00\x03\x00\x00\x00\x01' + \
+            '\x00\x00\x00\t\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
+            'Not found'
 
         flags = 0
         time = 1000
@@ -282,6 +285,15 @@ class ServerTests(unittest.TestCase):
             len(key), 0, 0, 0, len(key), 0, 0, key))
 
         self.assertEqual(self.tr.value(), expected_delete_fail)
+        self.tr.clear()
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['get']['struct'] % (len(key)),
+            self.MAGIC['request'],
+            self.COMMANDS['get']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+
+        self.assertEqual(self.tr.value(), expected_get_should_not_exists)
 
     def testUnknownCommand(self):
         key = 'foo'
