@@ -246,6 +246,8 @@ class ServerTests(unittest.TestCase):
         value = 'bar'
         expected_replace = '\x81\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        expected_get = '\x81\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x07' + \
+            '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00baz'
 
         flags = 0
         time = 1000
@@ -265,6 +267,15 @@ class ServerTests(unittest.TestCase):
             len(key),
             8, 0, 0, len(key) + len(value) + 8, 0, 0, flags, time, key, value))
         self.assertEqual(self.tr.value(), expected_replace)
+        self.tr.clear()
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['get']['struct'] % (len(key)),
+            self.MAGIC['request'],
+            self.COMMANDS['get']['command'],
+            len(key), 0, 0, 0, len(key), 0, 0, key))
+
+        self.assertEqual(self.tr.value(), expected_get)
 
     def testReplaceInvalidKey(self):
         key = 'foo'
