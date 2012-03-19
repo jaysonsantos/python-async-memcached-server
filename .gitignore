@@ -1,1 +1,5 @@
 *.pyc
+*.swp
+_trial_temp/*
+.coverage
+cover/*
