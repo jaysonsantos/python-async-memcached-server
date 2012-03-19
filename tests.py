@@ -371,6 +371,20 @@ class ServerTests(unittest.TestCase):
             '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
         self.assertEqual(self.tr.value(), '')
 
+    def testIncrement(self):
+        key = 'foo'
+        initial = 1
+        step = 2
+
+        self.protocol.dataReceived(struct.pack(self.HEADER_STRUCT + \
+            self.COMMANDS['incr']['struct'] % (len(key), len(value)),
+            self.MAGIC['request'],
+            self.COMMANDS['incr']['command'],
+            len(key),
+            8, 0, 0, len(key)  + 8, 0, 0, flags, time, key, value))
+
+        self.assertEqual(1, self.tr.value())
+
 
 class BaseTests(unittest.TestCase):
     def testGetValidStorage(self):
