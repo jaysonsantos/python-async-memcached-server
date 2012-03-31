@@ -9,6 +9,7 @@ I'm planning to have some sort of storages and add a possibility to persist data
 - Get, set, add, replace and delete functions.
 - Key expiration.
 - Support for custom storages.
+
 ## Testing
 ```bash
 trial tests.py
