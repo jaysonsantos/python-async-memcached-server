@@ -15,7 +15,7 @@ I'm planning to have some sort of storages and add a possibility to persist data
 trial tests.py
 ```
 
-## Benchmarks
+## Benchmarks (Outdated)
 To execute benchmarks, you need to run the server with:
 ```
 python -mpmemached
