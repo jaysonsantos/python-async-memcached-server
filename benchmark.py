@@ -6,7 +6,7 @@ client = bmemcached.Client('127.0.0.1')
 
 total = 0
 for i in xrange(1, 100000):
-    client.set('foo', i)
+    client.set('foo', i, 1000)
     total += client.get('foo')
 
 end = datetime.datetime.now()
