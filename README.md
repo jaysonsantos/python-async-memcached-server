@@ -6,14 +6,16 @@ This is not intended to be used in production, however I'm focusing in using pyp
 I'm planning to have some sort of storages and add a possibility to persist data.
 
 ## What is working?
-Get and set functions.
+- Get, set, add, replace and delete functions.
+- Key expiration.
+- Support for custom storages.
 
 ## Testing
 ```bash
 trial tests.py
 ```
 
-## Benchmarks
+## Benchmarks (Outdated)
 To execute benchmarks, you need to run the server with:
 ```
 python -mpmemached
