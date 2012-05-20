@@ -30,11 +30,11 @@ class Memcached(protocol.Protocol):
         'get': {'command': 0x00, 'struct': '%ds'},
         # Struct flags|expiry time|key|value
         'set': {'command': 0x01, 'struct': '!LL%ds%ds'},
-        'add': {'command': 0x02, 'struct': 'LL%ds%ds'},
-        'replace': {'command': 0x03, 'struct': 'LL%ds%ds'},
+        'add': {'command': 0x02, 'struct': '!LL%ds%ds'},
+        'replace': {'command': 0x03, 'struct': '!LL%ds%ds'},
         'delete': {'command': 0x04, 'struct': '%ds'},
-        #'incr': {'command': 0x05, 'struct': 'QQL%ds'},
-        #'decr': {'command': 0x06, 'struct': 'QQL%ds'},
+        #'incr': {'command': 0x05, 'struct': '!QQL%ds'},
+        #'decr': {'command': 0x06, 'struct': '!QQL%ds'},
         #'flush': {'command': 0x08, 'struct': 'I'},
         #'auth_negotiation': {'command': 0x20},
         #'auth_request': {'command': 0x21, 'struct': '%ds%ds'}
@@ -167,6 +167,33 @@ class Memcached(protocol.Protocol):
             self.sendMessage(command, 0, 0, self.STATUSES['success'], 0, 0)
         except KeyError:
              self.sendMessage(command, 0, 0, self.STATUSES['key_not_found'], 0, 0)
+
+    def _handleIncrDecrCommand(self, magic, command, keyLength, extLength,
+        dataType, status, bodyLength, opaque, cas, extra):
+        (delta, initial, expiry, key) = struct.unpack(self.COMMANDS['incr']['struct'] % keyLength, extra)
+        if key in self.factory.storage:
+            try:
+                value = self.factory.storage[key]
+                self.factory.storage[key] = {
+                    'expiry': expiry,
+                    'value': value['value'] + delta,
+                }
+            except TypeError:
+                self.factory.storage[key] = {
+                    'expiry': expiry,
+                    'value': initial
+                }
+        else:
+            self.factory.storage[key] = {
+                    'expiry': expiry,
+                    'value': initial
+                }
+
+        self.sendMessage(command, 0, 0, self.STATUSES['success'], 0, 0, None,
+            self.factory.storage[key])
+
+    def handleIncrCommand(self, *args):
+        return self._handleIncrDecrCommand(*args)
 
     def handleHeader(self, header):
         if len(header) != self.HEADER_SIZE:
