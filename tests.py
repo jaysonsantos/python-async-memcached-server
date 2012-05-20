@@ -386,6 +386,9 @@ class ServerTests(unittest.TestCase):
 
         self.assertEqual(1, self.tr.value())
 
+    def testDecrement(self):
+        raise unittest.SkipTest('stub')
+
 
 class BaseTests(unittest.TestCase):
     def testGetValidStorage(self):
