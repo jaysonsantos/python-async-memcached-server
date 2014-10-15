@@ -15,5 +15,8 @@ setup(
     ],
     entry_points={
         'console_scripts': ['pmemcached=pmemcached'],
-    }
+    },
+    install_requires=[
+        'twisted'
+    ]
 )
