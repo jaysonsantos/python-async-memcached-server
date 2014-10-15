@@ -216,6 +216,7 @@ class Memcached(protocol.Protocol):
             header = list(header)
             header.append(data[self.HEADER_SIZE:])
             self.handleCommand(*header)
+        return ''
 
     def dataReceived(self, data):
         self.transport.write(self.handleData(data))
