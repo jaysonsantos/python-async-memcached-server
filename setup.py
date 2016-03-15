@@ -17,6 +17,6 @@ setup(
         'console_scripts': ['pmemcached=pmemcached:run_server'],
     },
     install_requires=[
-        'Twisted==15.2.1'
+        'Twisted==16.0.0'
     ]
 )
